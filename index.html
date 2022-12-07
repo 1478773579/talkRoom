@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天室</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.1/jquery.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+    <style>
+        .user-msg {
+            display: flex;
+            align-items: center;
+        }
+
+        .me {
+            flex-direction: row-reverse;
+        }
+
+        .talk-list {
+            min-height: calc(100% - 60px);
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .head {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #ccc;
+            overflow: hidden;
+            box-shadow: 1px 1px 6px #999;
+        }
+
+        .head img {
+            height: 100%;
+            width: 100%;
+        }
+
+        .msg-content {
+            padding: 4px 6px;
+            margin: 0 10px;
+            box-shadow: 1px 1px 6px #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <div class="talk-list" id="talk-list">
+        </div>
+        <div class="input-box">
+            <input type="text" id="msg">
+            <button id="push">发送</button>
+        </div>
+    </div>
+    <script>
+        let userId = new Date().getTime()
+        localStorage.setItem('userId', userId)
+        var socket = io('ws://localhost:8081');
+        let msg = $('#msg')
+        let push = $('#push')
+        let talkList = $('#talk-list')
+        socket.emit('getMsgList')
+        push.click(() => {
+            let msgData = $.trim($('#msg').val());
+            socket.emit('sendMessage', { userId, msg: msgData })
+        })
+        socket.on('receiveMessage', (data) => {
+            console.log(data)
+            let { userId, msg } = data
+            talkList.append(temlateText(userId, msg))
+        })
+        socket.on('msgList', (list) => {
+            console.log(list)
+            list.map(item => {
+                let { userId, msg } = item
+                talkList.append(temlateText(userId, msg))
+            })
+        })
+
+        function temlateText(id, msg) {
+            let userId = localStorage.getItem('userId')
+            console.log(userId, id)
+            if (id == userId / 1) {
+                return (
+                    `<div class="user-msg me">
+                <div class="head">
+                    <img src="./user1.png" alt="">
+                </div>
+                <div class="msg-content">${msg}</div>
+            </div>`
+                )
+            } else {
+                return (
+                    `<div class="user-msg">
+                <div class="head">
+                    <img src="./user1.png" alt="">
+                </div>
+                <div class="msg-content">${msg}</div>
+            </div>`
+                )
+            }
+        }
+    </script>
+</body>
+
+</html>
